@@ -4,5 +4,5 @@
   group: upgrade.example.com
   kind: Plan
   role: plan
-  reconcilePeriod: 5s
+  reconcilePeriod: 60s
 #+kubebuilder:scaffold:watch

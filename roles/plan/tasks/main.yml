@@ -8,24 +8,31 @@
   register: nodes
 
 # Debug
-#- name: Print return information from the previous task
+# - name: Print return information from the previous task
 #  ansible.builtin.debug:
 #    var: item
 #  loop: "{{ nodes | community.general.json_query('resources[*].metadata.labels') }}"
 
 # Gather Machine Config Pools
-- name: Gather Worker Machine Config Pools
+- name: Gather Control Plane Machine Config Pools
   kubernetes.core.k8s_info:
     api_version: "machineconfiguration.openshift.io/v1"
     kind: MachineConfigPool
-#    field_selectors:
-#     - spec.machineConfigSelector.matchLabels.machineconfiguration{{"."}}openshift{{"."}}io/role=worker
   register: machineconfigpools
+
+# Set Control Plane Pool and Worker Pools
+- name: Set MCP Facts
+  ansible.builtin.set_fact:
+    cp_mcp_names: "{{ machineconfigpools | community.general.json_query(cp_query) }}"
+    dp_mcp_names: "{{ machineconfigpools | community.general.json_query(dp_query) }}"
+  vars:
+    cp_query: resources[?(metadata.labels."pools.operator.machineconfiguration.openshift.io/master"=='')].metadata.name
+    dp_query: resources[?!(metadata.labels."pools.operator.machineconfiguration.openshift.io/master"=='' || metadata.labels."pools.operator.machineconfiguration.openshift.io/canary"=='')      ].metadata.name
 
 # Debug
 - name: Print return information from the previous task
   ansible.builtin.debug:
-    msg: "{{ machineconfigpools }}"
+    msg: "{{ dp_mcp_names }}"
 
 # Pause Worker Pools
 - name: Pause Worker Pools
@@ -36,4 +43,4 @@
     definition:
       spec:
         paused: true
-  loop: "{{ machineconfigpools | community.general.json_query('resources[*].metadata.name') }}"
+  loop: "{{ dp_mcp_names | list }}"

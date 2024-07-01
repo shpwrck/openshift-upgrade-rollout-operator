@@ -1,0 +1,12 @@
+apiVersion: upgrade.example.com/v1alpha1
+kind: Plan
+metadata:
+  labels:
+    app.kubernetes.io/name: plan
+    app.kubernetes.io/instance: plan-sample
+    app.kubernetes.io/part-of: ansible-test
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: ansible-test
+  name: plan-sample
+spec:
+  # TODO(user): Add fields here

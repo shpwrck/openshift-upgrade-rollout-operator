@@ -1,0 +1,39 @@
+---
+# tasks file for Plan
+# Gather Nodes
+- name: Gather Node Info
+  kubernetes.core.k8s_info:
+    api_version: "v1"
+    kind: Node
+  register: nodes
+
+# Debug
+#- name: Print return information from the previous task
+#  ansible.builtin.debug:
+#    var: item
+#  loop: "{{ nodes | community.general.json_query('resources[*].metadata.labels') }}"
+
+# Gather Machine Config Pools
+- name: Gather Worker Machine Config Pools
+  kubernetes.core.k8s_info:
+    api_version: "machineconfiguration.openshift.io/v1"
+    kind: MachineConfigPool
+#    field_selectors:
+#     - spec.machineConfigSelector.matchLabels.machineconfiguration{{"."}}openshift{{"."}}io/role=worker
+  register: machineconfigpools
+
+# Debug
+- name: Print return information from the previous task
+  ansible.builtin.debug:
+    msg: "{{ machineconfigpools }}"
+
+# Pause Worker Pools
+- name: Pause Worker Pools
+  kubernetes.core.k8s:
+    api_version: "machineconfiguration.openshift.io/v1"
+    kind: MachineConfigPool
+    name: "{{ item }}"
+    definition:
+      spec:
+        paused: true
+  loop: "{{ machineconfigpools | community.general.json_query('resources[*].metadata.name') }}"

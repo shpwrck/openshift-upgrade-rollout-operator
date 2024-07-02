@@ -5,4 +5,10 @@
   kind: Plan
   role: plan
   reconcilePeriod: 60s
+  manageStatus: false
+  finalizer:
+    name: upgrade.example.com/finalizer
+    role: plan
+    vars:
+      state: absent
 #+kubebuilder:scaffold:watch

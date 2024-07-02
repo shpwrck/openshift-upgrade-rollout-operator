@@ -1,0 +1,11 @@
+apiVersion: upgrade.example.com/v1alpha1
+kind: Plan
+metadata:
+  name: example
+  annotations:
+    ansible.sdk.operatorframework.io/verbosity: 2
+spec:
+  tower:
+    controller_host: ""
+    controller_oauthtoken: ""
+    job_template: ""

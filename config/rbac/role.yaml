@@ -41,6 +41,14 @@ rules:
   ## Rules for upgrade.example.com/v1alpha1, Kind: Plan
   ##
   - apiGroups:
+      - "config.openshift.io"
+    resources:
+      - clusterversions
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
       - ""
     resources:
       - nodes

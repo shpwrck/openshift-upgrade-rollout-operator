@@ -6,22 +6,18 @@
     name: version
   register: version
 
-- name: Get Cluster Version History
+# Set Control Plane Pool and Work Plane Pools
+- name: Set MCP Facts
   ansible.builtin.set_fact:
-    version_status: "{{ version | community.general.json_query(query) }}"
+    desired_version: "{{ version | community.general.json_query(query) }}"
   vars:
-    query: 'resources[*].status.history[]'
+    query: 'resources[*].spec.desiredUpdate.version'
 
-- name: Print return information from the previous task
-  ansible.builtin.debug:
-    msg: "{{ version_status }}"
-
-
-- name: Set Version Status
+- name: Report Updateability
   operator_sdk.util.k8s_status:
     api_version: "upgrade.example.com/v1alpha1"
     kind: Plan
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     status:
-      update_status: "{{ version_status | first }}"
+      desired_version: "{{ desired_version }}"

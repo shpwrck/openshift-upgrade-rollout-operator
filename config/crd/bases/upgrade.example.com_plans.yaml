@@ -30,13 +30,35 @@ spec:
           metadata:
             type: object
           spec:
-            description: Spec defines the desired state of Plan
+            description: Spec defines the desired state of Plan resource
+            properties:
+              aap:
+                description: Configuration for Ansible Automation Platform
+                properties:
+                  controller_host:
+                    description: "Server address of AAP (without protocol)"
+                    type: string
+                    pattern: '^.+$'
+                  controller_oauthtoken:
+                    description: "OAuthToken generated with {{controller_host}}/api/v2/tokens/"
+                    type: string
+                    pattern: '^.+$'
+                  job_template:
+                    description: 'Name of the job template being launched'
+                    type: string
+                    pattern: '^.+$'
+                required:
+                - controller_host
+                - controller_oauthtoken
+                - job_template
+                type: object
             type: object
-            x-kubernetes-preserve-unknown-fields: true
           status:
-            description: Status defines the observed state of Plan
+            description: Status defines the observed state of Plan resource
             type: object
             x-kubernetes-preserve-unknown-fields: true
+        required:
+        - spec
         type: object
     served: true
     storage: true

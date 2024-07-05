@@ -1,0 +1,11 @@
+---
+# Print Vars
+- name: Print Vars
+  ansible.builtin.debug:
+    msg: "{{ vars }}"
+
+
+# Sleep
+- name: Pause for 5 minutes to build app cache
+  ansible.builtin.pause:
+    minutes: 5

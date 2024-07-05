@@ -1,5 +1,4 @@
 ---
-# tasks file for Plan
 # Gather Nodes
 - name: Gather Node Info
   kubernetes.core.k8s_info:
@@ -15,16 +14,6 @@
   vars:
     cp_query: resources[?(metadata.labels."node-role.kubernetes.io/master"=='')]
     wp_query: resources[?(metadata.labels."node-role.kubernetes.io/worker"=='')]
-
-# Debug
-- name: Print return information from the previous task
-  ansible.builtin.debug:
-    msg: "{{ cp_nodes | community.general.json_query('[*].metadata.name') }}"
-
-# Debug
-- name: Print return information from the previous task
-  ansible.builtin.debug:
-    msg: "{{ wp_nodes | community.general.json_query('[*].metadata.name') }}"
 
 # Gather Machine Config Pools
 - name: Gather Control Plane Machine Config Pools
@@ -45,11 +34,6 @@
       resources[?!(metadata.labels."pools.operator.machineconfiguration.openshift.io/master"==''
       ||
       metadata.labels."pools.operator.machineconfiguration.openshift.io/canary"=='')].metadata.name
-
-# Debug
-- name: Print return information from the previous task
-  ansible.builtin.debug:
-    msg: "{{ wp_mcp_names }}"
 
 # Pause Worker Pools
 - name: Pause Worker Pools

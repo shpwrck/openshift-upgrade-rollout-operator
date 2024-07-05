@@ -4,8 +4,11 @@
   group: upgrade.example.com
   kind: Plan
   role: plan
-  reconcilePeriod: 60s
+  reconcilePeriod: 10s
   manageStatus: false
+  watchAnnotationsChanges: True
+  watchDependentResources: True
+  watchClusterScopedResources: True
   finalizer:
     name: upgrade.example.com/finalizer
     role: plan

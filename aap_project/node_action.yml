@@ -8,3 +8,6 @@
     - name: Print Vars
       ansible.builtin.debug:
         msg: "{{ vars }}"
+
+    - name: Pause
+      minutes: 5

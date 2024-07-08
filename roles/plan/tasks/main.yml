@@ -2,30 +2,20 @@
 # Is the CRD valid?
 - name: Validate CRD
   ansible.builtin.include_tasks: set_validation_status.yml
-  when:
-    - state in ("present")
 
 # Is there an update?
 - name: Identify Update Status
   ansible.builtin.include_tasks: set_upgrade_status.yml
-  when:
-    - state in ("present")
 
 # Is the control plane finished?
 - name: Pause Nodes
   ansible.builtin.include_tasks: modify_mcps.yml
-  when:
-    - state in ("present")
 
 # Is there a canary pool?
 - name: Create Canary Pool
   ansible.builtin.include_tasks: modify_canary_mcp.yml
-  when:
-    - state in ("present", "absent")
 
 # Run Jobs
 - name: Run Job
   ansible.builtin.include_tasks: run_jobs.yml
-  when:
-    - state in ("present")
   loop: "{{ wp_nodes }}"

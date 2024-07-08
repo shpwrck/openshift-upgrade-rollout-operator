@@ -6,12 +6,17 @@
     name: version
   register: version
 
-# Set Control Plane Pool and Work Plane Pools
 - name: Set MCP Facts
   ansible.builtin.set_fact:
     desired_version: "{{ version | community.general.json_query(query) }}"
   vars:
     query: 'resources[*].spec.desiredUpdate.version'
+
+- name: Gather Node Info
+  kubernetes.core.k8s_info:
+    api_version: "v1"
+    kind: Node
+  register: nodes
 
 - name: Report Updateability
   operator_sdk.util.k8s_status:

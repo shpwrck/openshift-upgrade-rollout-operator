@@ -1,9 +1,9 @@
 ---
 - name: Example Node Operations
-  hosts: localhost
+  hosts: "{{ variable_host | default('localhost') }}"
   gather_facts: yes
-tasks:
-  # Print Vars
-  - name: Print Vars
-    ansible.builtin.debug:
-      msg: "{{ vars }}"
+  tasks:
+    # Print Vars
+    - name: Print Vars
+      ansible.builtin.debug:
+        msg: "{{ vars }}"

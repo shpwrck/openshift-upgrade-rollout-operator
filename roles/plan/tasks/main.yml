@@ -10,12 +10,15 @@
 # Is the control plane finished?
 - name: Pause Nodes
   ansible.builtin.include_tasks: modify_mcps.yml
+  when: version_skew is defined
 
 # Is there a canary pool?
 - name: Create Canary Pool
   ansible.builtin.include_tasks: modify_canary_mcp.yml
+  when: version_skew is defined
 
 # Run Jobs
 - name: Run Job
   ansible.builtin.include_tasks: run_jobs.yml
   loop: "{{ wp_nodes }}"
+  when: version_skew is defined

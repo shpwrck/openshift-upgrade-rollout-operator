@@ -1,7 +1,8 @@
 ---
 - name: Example Node Operations
   hosts: "{{ variable_host | default('localhost') }}"
-  gather_facts: yes
+  gather_facts: no
+
   tasks:
     # Print Vars
     - name: Print Vars

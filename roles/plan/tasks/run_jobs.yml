@@ -6,6 +6,8 @@
         controller_host: "{{ vars.aap.controller_host }}"
         controller_oauthtoken: "{{ vars.aap.controller_oauthtoken }}"
         job_template: "{{ vars.aap.job_template }}"
+        extra_vars:
+          variable_host: "{{ item.metadata.name }}"
         wait: true
       register: launch_results
     - name: Report Job Run Success

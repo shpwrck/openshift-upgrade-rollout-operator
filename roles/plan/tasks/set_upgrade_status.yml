@@ -18,6 +18,13 @@
     kind: Node
   register: nodes
 
+- name: Set Node Version Facts
+  ansible.builtin.set_fact:
+    desired_version: "{{ nodes | community.general.json_query(query) }}"
+  vars:
+    query: 'resources[*].{name: metadata.name, version: metadata.labels."machineconfiguration.openshift.io/release-image-version"}'
+
+
 - name: Report Updateability
   operator_sdk.util.k8s_status:
     api_version: "upgrade.example.com/v1alpha1"

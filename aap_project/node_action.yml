@@ -10,4 +10,5 @@
         msg: "{{ vars }}"
 
     - name: Pause
-      minutes: 5
+      ansible.builtin.pause:
+        minutes: 5

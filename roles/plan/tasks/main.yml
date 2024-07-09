@@ -32,6 +32,7 @@
   when:
     - finalize is undefined
     - valid_crd_configuration
+    - worker_nodes_upgradeable
     - machine_config_pools_paused
 
 # Run Jobs

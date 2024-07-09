@@ -21,7 +21,7 @@
         namespace: "{{ ansible_operator_meta.namespace }}"
         status:
           aap_configuration:
-            configuration: "Valid"
+            valid: true
 
   rescue:
     # Upon Failure, Set Status to Invalid
@@ -33,7 +33,7 @@
         namespace: "{{ ansible_operator_meta.namespace }}"
         status:
           aap_configuration:
-            configuration: "Invalid"
+            valid: false
 
   always:
     # Update Control Flow Variable

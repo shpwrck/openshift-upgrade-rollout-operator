@@ -13,6 +13,11 @@
         wait: true
       register: launch_results
 
+    # Update Results Global Variable
+    - name: Update Job List
+      ansible.builtin.set_fact:
+        cummulative_launch_results: "{{ cummulative_launch_results | default([]) + [launch_results] }}"
+
     # Upon Success, Update Status
     - name: Report Job Run Success
       operator_sdk.util.k8s_status:
@@ -21,8 +26,7 @@
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
         status:
-          jobs:
-            status: "complete"
+          jobs: "{{ cummulative_launch_results }}"
 
     # Upon Success, Label the Node with the Canary MCP Label
     - name: Add Mutable Label
@@ -53,8 +57,7 @@
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
         status:
-          job:
-            status: "job incomplete"
+          jobs: "{{ cummulative_launch_results }}"
 
   always:
     # Update Control Flow Variable

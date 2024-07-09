@@ -1,0 +1,42 @@
+---
+- name: Canary Pool Block
+  block:
+    # Create the Canary Machine Config Pool
+    - name: Create Canary Machine Config Pool
+      kubernetes.core.k8s:
+        state: present
+        template: canarymachineconfigpool.yml
+      vars:
+        resource_name: "{{ _upgrade_example_com_plan.metadata.name }}"
+        resource_namespace: "{{ _upgrade_example_com_plan.metadata.namespace }}"
+        resource_kind: "{{ _upgrade_example_com_plan.kind }}"
+        resource_group: "{{ _upgrade_example_com_plan.apiVersion | split('/') | first }}"
+
+    # Upon Success, Set Canary Status true
+    - name: Report Canary Created
+      operator_sdk.util.k8s_status:
+        api_version: "upgrade.example.com/v1alpha1"
+        kind: Plan
+        name: "{{ ansible_operator_meta.name }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        status:
+          canary:
+            created: true
+
+  rescue:
+    # Upon Failure, Set Canary Status false
+    - name: Report Canary Not Created
+      operator_sdk.util.k8s_status:
+        api_version: "upgrade.example.com/v1alpha1"
+        kind: Plan
+        name: "{{ ansible_operator_meta.name }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        status:
+          canary:
+            created: false
+
+  always:
+    # Update Control Flow Variable
+    - name: Set Canary Machine Config Pool Present
+      ansible.builtin.set_fact:
+        canary_machine_config_pool_present: "{{ (ansible_failed_result is not defined) | ternary('true', 'false') }}"

@@ -11,7 +11,7 @@
   watchClusterScopedResources: True
   finalizer:
     name: upgrade.example.com/finalizer
-    playbook: modify_canary_mcp.yml
+    role: plan
     vars:
-      state: absent
+      finalize: ''
 #+kubebuilder:scaffold:watch

@@ -11,4 +11,4 @@
 
     - name: Pause
       ansible.builtin.pause:
-        minutes: 5
+        minutes: 1

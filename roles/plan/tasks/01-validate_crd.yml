@@ -2,6 +2,7 @@
 # Validate AAP Configuration
 - name: AAP Configuration Validation Block
   block:
+    # Confirm AAP Config through URI
     - name: Confirm oauthtoken, host, and job
       ansible.builtin.uri:
         url: "https://{{ vars.aap.controller_host }}/api/v2/job_templates?search={{ vars.aap.job_template | urlencode() }}"
@@ -10,6 +11,8 @@
       register: aap_response
       failed_when:
       - aap_response.json.count != 1
+
+    # Upon Success, Set Status to Valid
     - name: Report Configuration Results
       operator_sdk.util.k8s_status:
         api_version: "upgrade.example.com/v1alpha1"
@@ -18,8 +21,10 @@
         namespace: "{{ ansible_operator_meta.namespace }}"
         status:
           aap_configuration:
-            status: "Valid"
+            configuration: "Valid"
+
   rescue:
+    # Upon Failure, Set Status to Invalid
     - name: Report Invalid Config
       operator_sdk.util.k8s_status:
         api_version: "upgrade.example.com/v1alpha1"
@@ -28,8 +33,10 @@
         namespace: "{{ ansible_operator_meta.namespace }}"
         status:
           aap_configuration:
-            status: "Invalid"
-    - name: Stop on Invalid Configuration
-      ansible.builtin.fail:
-        msg: "AAP Configuration is Invalid"
+            configuration: "Invalid"
 
+  always:
+    # Update Control Flow Variable
+    - name: Set Configuration Status
+      ansible.builtin.set_fact:
+        valid_crd_configuration: "{{ (ansible_failed_result is not defined) | ternary('true', 'false') }}"

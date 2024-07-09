@@ -1,0 +1,61 @@
+---
+# Gather ClusterVersion to determine desired version and upgrade status
+- name: Gather Cluster Verion Info
+  kubernetes.core.k8s_info:
+    api_version: "config.openshift.io/v1"
+    kind: ClusterVersion
+    name: version
+  register: version
+
+# Reduce ClusterVersion Variable DesiredVersion and History
+- name: Set MCP Facts
+  ansible.builtin.set_fact:
+    desired_version: "{{ version | community.general.json_query(dv_query) }}"
+    version_history: "{{ version | community.general.json_query(vh_query) }}"
+  vars:
+    dv_query: 'resources[*].spec.desiredUpdate.version | [0]'
+    vh_query: 'resources[*].status.history[0].state | [0]'
+
+# Gather Node to determine node version levels
+- name: Gather Node Info
+  kubernetes.core.k8s_info:
+    api_version: "v1"
+    kind: Node
+  register: nodes
+
+# Reduce Node Variable to Version
+- name: Set Worker Node Version Facts
+  ansible.builtin.set_fact:
+    worker_node_version: "{{ nodes | community.general.json_query(query) }}"
+  vars:
+    query: >-
+      resources[?(metadata.labels."node-role.kubernetes.io/worker"=='')].metadata.labels."machineconfiguration.openshift.io/release-image-version"
+
+# If ANY worker node has a different version than the desired version proceed
+- name: Compare 'desired_version' to 'worker_node_version' for each worker node
+  ansible.builtin.set_fact:
+    version_skew: "true"
+  loop: "{{ worker_node_version }}"
+  when: item is version(desired_version,'lt', version_type='semver')
+
+# If the Upgrade is in a Completed state proceed
+- name: Determine state of upgrade
+  ansible.builtin.set_fact:
+    controlplane_ready: "true"
+  when: version_history == "Completed"
+
+# Update Control Flow Variable
+- name: Report Updateability
+  operator_sdk.util.k8s_status:
+    api_version: "upgrade.example.com/v1alpha1"
+    kind: Plan
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    status:
+      upgradeable: "{{ (version_skew is defined and controlplane_ready is defined) | ternary('true', 'false') }}"
+
+# Update Control Flow
+- name: Set Worker Nodes Upgradeable
+  ansible.builtin.set_fact:
+    worker_nodes_upgradeable: true
+#    worker_nodes_upgradeable: "{{ (version_skew is defined and controlplane_ready is defined) | ternary('true', 'false') }}"

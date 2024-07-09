@@ -1,0 +1,45 @@
+---
+- name: Finalizer Block
+  block:
+    # Get Canary Pool
+    - name: Gather Control Plane Machine Config Pools
+      kubernetes.core.k8s_info:
+        api_version: "machineconfiguration.openshift.io/v1"
+        kind: MachineConfigPool
+        name: canary
+      register: canary_mcp
+
+    # Disconnect Machine Config
+    - name: Disconnect Machine Config
+      kubernetes.core.k8s_json_patch:
+        kind: MachineConfig
+        api_version: "v1"
+        name: "{{ canary_mcp | community.general.json_query('resources[].spec.configuration.name | [0]') }}"
+        patch:
+          - op: remove
+            path: "/metadata/annotations"
+          - op: remove
+            path: "/metadata/ownerReferences"
+
+    # Attempt to Delete Canary Pool
+    - name: Delete Canary Machine Config Pool
+      kubernetes.core.k8s:
+        state: absent
+        template: canarymachineconfigpool.yml
+      vars:
+        resource_name: "{{ _upgrade_example_com_plan.metadata.name }}"
+        resource_namespace: "{{ _upgrade_example_com_plan.metadata.namespace }}"
+        resource_kind: "{{ _upgrade_example_com_plan.kind }}"
+        resource_group: "{{ _upgrade_example_com_plan.apiVersion | split('/') | first }}"
+
+  rescue:
+    # Upon Failure, Update Status
+    - name: Report Finalizer Failure
+      operator_sdk.util.k8s_status:
+        api_version: "upgrade.example.com/v1alpha1"
+        kind: Plan
+        name: "{{ ansible_operator_meta.name }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        status:
+          finalizer:
+            error: "Failed to delete Canary"

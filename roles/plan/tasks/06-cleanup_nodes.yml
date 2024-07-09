@@ -1,0 +1,11 @@
+---
+- name: Cleanup Block
+# Remove Nodes From Canary Node Pool
+- name: Remove Mutable Label
+  kubernetes.core.k8s_json_patch:
+    kind: Node
+    api_version: "v1"
+    name: "{{ item.metadata.name }}"
+    patch:
+      - op: remove
+        path: "/metadata/labels/upgrades.example.com~1mutable"

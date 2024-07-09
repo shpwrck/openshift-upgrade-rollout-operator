@@ -64,6 +64,7 @@ rules:
       - "machineconfiguration.openshift.io"
     resources:
       - machineconfigpools
+      - machineconfigs
     verbs:
       - create
       - delete

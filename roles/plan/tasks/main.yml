@@ -59,3 +59,17 @@
     - machine_config_pools_paused
     - canary_machine_config_pool_present
     - worker_nodes_upgraded
+
+# Playbook Complete Set Upgrade to False
+- name: Upgrade Not Running
+  operator_sdk.util.k8s_status:
+    api_version: "upgrade.example.com/v1alpha1"
+    kind: Plan
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Upgrading
+        status: "False"
+        reason: "UpgradeComplete"
+        message: "All nodes have been upgraded"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"

@@ -77,5 +77,4 @@
 # Update Control Flow
 - name: Set Worker Nodes Upgradeable
   ansible.builtin.set_fact:
-    worker_nodes_upgradeable: true
-    # worker_nodes_upgradeable: "{{ (version_skew is defined and controlplane_ready is defined) | ternary(true, false) }}"
+    worker_nodes_upgradeable: "{{ (version_skew is defined and controlplane_ready is defined) | ternary(true, false) }}"

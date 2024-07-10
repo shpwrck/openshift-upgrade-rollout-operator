@@ -1,6 +1,19 @@
 ---
-- name: Cleanup Block
-# Remove Nodes From Canary Node Pool
+# Update Upgrading Status
+- name: Report Upgrade Complete
+  operator_sdk.util.k8s_status:
+    api_version: "upgrade.example.com/v1alpha1"
+    kind: Plan
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Upgrading
+        status: "False"
+        reason: "UpgradeComplete"
+        message: "All nodes have been upgraded"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
+# Remove Mutable Label
 - name: Remove Mutable Label
   kubernetes.core.k8s_json_patch:
     kind: Node

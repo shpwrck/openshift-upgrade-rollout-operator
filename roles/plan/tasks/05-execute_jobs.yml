@@ -12,7 +12,7 @@
           variable_host: "{{ item.metadata.name }}"
       register: launch_results
 
-    # Update Launch Status
+    # Update Upgrading Status
     - name: Report Job Run Start
       operator_sdk.util.k8s_status:
         api_version: "upgrade.example.com/v1alpha1"
@@ -36,7 +36,7 @@
         job_id: "{{ launch_results.id }}"
 
     # Update Launch Status
-    - name: Report Job Run Start
+    - name: Report Job Run Finish
       operator_sdk.util.k8s_status:
         api_version: "upgrade.example.com/v1alpha1"
         kind: Plan

@@ -51,7 +51,7 @@ endif
 OPERATOR_SDK_VERSION ?= v1.35.0
 
 # Image URL to use all building/pushing image targets
-IMG ?= quay.io/jskrzypek/upgrade-operator:0.0.1
+IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
 
 .PHONY: all
 all: docker-build

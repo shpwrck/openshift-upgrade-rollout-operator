@@ -1,0 +1,42 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: ansible-test.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions: {}
+  description: Inject hooks into the node upgrade process
+  displayName: OpenShift Incremental Upgrades
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - upgrade
+  - webhook
+  links:
+  - name: Ansible Test
+    url: https://ansible-test.domain
+  maintainers:
+  - email: jskrzype@redhat.com
+    name: name1
+  maturity: alpha
+  provider:
+    name: example.com
+  version: 0.0.0

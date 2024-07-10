@@ -1,4 +1,5 @@
 ---
+# Drain and Delete Canary Machine Config Pool
 - name: Finalizer Block
   block:
     # Get Canary Pool
@@ -40,6 +41,9 @@
         kind: Plan
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
-        status:
-          finalizer:
-            error: "Failed to delete Canary"
+        conditions:
+          - type: Canary
+            status: "False"
+            reason: FailedDelete
+            message: Finalizer failed to delete canary machine config pool
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"

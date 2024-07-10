@@ -39,6 +39,8 @@
 - name: Run Job
   ansible.builtin.include_tasks: 05-execute_jobs.yml
   loop: "{{ wp_nodes }}"
+  loop_control:
+    extended: true
   when:
     - finalize is undefined
     - valid_crd_configuration

@@ -19,9 +19,12 @@
         kind: Plan
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
-        status:
-          canary:
-            created: true
+        conditions:
+          - type: Canary
+            status: "True"
+            reason: Created
+            message: Canary machine config pool has been created
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
   rescue:
     # Upon Failure, Set Canary Status false
@@ -31,9 +34,12 @@
         kind: Plan
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
-        status:
-          canary:
-            created: false
+        conditions:
+          - type: Canary
+            status: "False"
+            reason: FailedCreate
+            message: Failed to create canary machine config pool
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
   always:
     # Update Control Flow Variable

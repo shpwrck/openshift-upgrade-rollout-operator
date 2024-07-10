@@ -19,9 +19,12 @@
         kind: Plan
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
-        status:
-          aap_configuration:
-            valid: true
+        conditions:
+          - type: Validation
+            status: "True"
+            reason: CRDValid
+            message: The AAP configuration has been validated successfully
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
   rescue:
     # Upon Failure, Set Status to Invalid
@@ -31,9 +34,12 @@
         kind: Plan
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
-        status:
-          aap_configuration:
-            valid: false
+        conditions:
+          - type: Validation
+            status: "False"
+            reason: CRDInvalid
+            message: The AAP configuration has not been validated successfully
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
   always:
     # Update Control Flow Variable

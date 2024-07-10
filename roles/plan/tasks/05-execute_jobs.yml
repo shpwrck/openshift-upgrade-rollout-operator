@@ -10,23 +10,46 @@
         job_template: "{{ vars.aap.job_template }}"
         extra_vars:
           variable_host: "{{ item.metadata.name }}"
-        wait: true
       register: launch_results
 
-    # Update Results Global Variable
-    - name: Update Job List
-      ansible.builtin.set_fact:
-        cummulative_launch_results: "{{ cummulative_launch_results | default([]) + [launch_results] }}"
-
-    # Upon Success, Update Status
-    - name: Report Job Run Success
+    # Update Launch Status
+    - name: Report Job Run Start
       operator_sdk.util.k8s_status:
         api_version: "upgrade.example.com/v1alpha1"
         kind: Plan
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
-        status:
-          jobs: "{{ cummulative_launch_results }}"
+        conditions:
+          - type: Upgrading
+            status: "True"
+            reason: "JobLaunched"
+            message: |-
+              Job {{ launch_results.id }} is running
+              Node is {{ ansible_loop.index }} of {{ ansible_loop.length }}
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
+    # Wait For Job
+    - name: Wait For Job
+      awx.awx.job_wait:
+        controller_host: "{{ vars.aap.controller_host }}"
+        controller_oauthtoken: "{{ vars.aap.controller_oauthtoken }}"
+        job_id: "{{ launch_results.id }}"
+
+    # Update Launch Status
+    - name: Report Job Run Start
+      operator_sdk.util.k8s_status:
+        api_version: "upgrade.example.com/v1alpha1"
+        kind: Plan
+        name: "{{ ansible_operator_meta.name }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        conditions:
+          - type: Upgrading
+            status: "True"
+            reason: "NodeUpgrading"
+            message: |-
+              Node {{ item.metadata.name }} is upgrading
+              Node is {{ ansible_loop.index }} of {{ ansible_loop.length }}
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
     # Upon Success, Label the Node with the Canary MCP Label
     - name: Add Mutable Label
@@ -56,8 +79,14 @@
         kind: Plan
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
-        status:
-          jobs: "{{ cummulative_launch_results }}"
+        conditions:
+          - type: Upgrading
+            status: "False"
+            reason: "{{ (launch_results.status != 'Successful') | ternary('JobFailed', 'NodeUpgradeFailed') }}"
+            message: |-
+              {{ (launch_results.status != 'Successful') | ternary('Job Failed', 'Node Upgrade Failed') }}
+              Node {{ item.metadata.name }}
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
   always:
     # Update Control Flow Variable

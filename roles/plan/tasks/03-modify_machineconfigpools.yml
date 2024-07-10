@@ -43,9 +43,12 @@
         kind: Plan
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
-        status:
-          workermachineconfigpools:
-            paused: true
+        conditions:
+          - type: WorkerNodePools
+            status: "True"
+            reason: "NodePoolsPaused"
+            message: "All Worker Node Pools have been paused"
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
   rescue:
     # Upon Failure, Set Paused Status false
@@ -55,9 +58,12 @@
         kind: Plan
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
-        status:
-          workermachineconfigpools:
-            paused: false
+        conditions:
+          - type: WorkerNodePools
+            status: "False"
+            reason: "NodePoolsNotPaused"
+            message: "Failure to pause Worker Node Pools"
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
   always:
     # Update Control Flow Variable

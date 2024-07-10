@@ -44,19 +44,38 @@
     controlplane_ready: "true"
   when: version_history == "Completed"
 
-# Update Control Flow Variable
-- name: Report Updateability
+# Update Upgradeable Status
+- name: Report Upgradeable (Success)
   operator_sdk.util.k8s_status:
     api_version: "upgrade.example.com/v1alpha1"
     kind: Plan
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
-    status:
-      worker_nodes:
-        upgradeable: "{{ (version_skew is defined and controlplane_ready is defined) | ternary(true, false) }}"
+    conditions:
+      - type: Upgradeable
+        status: "True"
+        reason: "VersionSkewAndControlPlaneReady"
+        message: "DatePlane version is less than desired version and ControlPlane is ready"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+  when: version_skew is defined and controlplane_ready is defined
+
+# Update Upgradeable Status
+- name: Report Upgradeable (Failure)
+  operator_sdk.util.k8s_status:
+    api_version: "upgrade.example.com/v1alpha1"
+    kind: Plan
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Upgradeable
+        status: "False"
+        reason: "{{ (version_skew is defined) | ternary('ControlPlaneReady', 'VersionSkew') }}"
+        message: "{{ (version_skew is defined) | ternary('ControlPlane is not ready', 'Node versions match desired version') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+  when: version_skew is not defined or controlplane_ready is not defined
 
 # Update Control Flow
 - name: Set Worker Nodes Upgradeable
   ansible.builtin.set_fact:
     worker_nodes_upgradeable: true
-#    worker_nodes_upgradeable: "{{ (version_skew is defined and controlplane_ready is defined) | ternary(true, false) }}"
+    # worker_nodes_upgradeable: "{{ (version_skew is defined and controlplane_ready is defined) | ternary(true, false) }}"

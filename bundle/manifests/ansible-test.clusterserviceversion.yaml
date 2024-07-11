@@ -2,9 +2,33 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
-    alm-examples: '[]'
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "upgrade.example.com/v1alpha1",
+          "kind": "Plan",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "ansible-test",
+              "app.kubernetes.io/instance": "plan-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "plan",
+              "app.kubernetes.io/part-of": "ansible-test"
+            },
+            "name": "plan-sample"
+          },
+          "spec": {
+            "aap": {
+              "controller_host": "{{ controller_host }}",
+              "controller_oauthtoken": "{{ oauth_token }}",
+              "job_template": "{{ job_template }}"
+            }
+          }
+        }
+      ]
     capabilities: Basic Install
     categories: OpenShift Optional
+    createdAt: "2024-07-11T19:55:21Z"
     features.operators.openshift.io/cnf: "false"
     features.operators.openshift.io/cni: "false"
     features.operators.openshift.io/csi: "false"
@@ -15,14 +39,20 @@ metadata:
     features.operators.openshift.io/token-auth-aws: "false"
     features.operators.openshift.io/token-auth-azure: "false"
     features.operators.openshift.io/token-auth-gcp: "false"
+    operators.operatorframework.io/builder: operator-sdk-v1.35.0
+    operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
     provider: Jason Skrzypek
     repository: https://github.com/shpwrck/openshift-upgrade-rollout-operator
     support: Best Effort
-  name: ansible-test.v0.0.0
+  name: ansible-test.v0.0.6
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
-  customresourcedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - kind: Plan
+      name: plans.upgrade.example.com
+      version: v1alpha1
   description: Inject hooks into the node upgrade process
   displayName: OpenShift Incremental Upgrades
   icon:
@@ -304,8 +334,230 @@ spec:
     mediatype: image/png
   install:
     spec:
-      deployments: null
-    strategy: ""
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - secrets
+          - pods
+          - pods/exec
+          - pods/log
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - config.openshift.io
+          resources:
+          - clusterversions
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - nodes
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - machineconfiguration.openshift.io
+          resources:
+          - machineconfigpools
+          - machineconfigs
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - upgrade.example.com
+          resources:
+          - plans
+          - plans/status
+          - plans/finalizers
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        serviceAccountName: ansible-test-controller-manager
+      deployments:
+      - label:
+          app.kubernetes.io/component: manager
+          app.kubernetes.io/created-by: ansible-test
+          app.kubernetes.io/instance: controller-manager
+          app.kubernetes.io/managed-by: kustomize
+          app.kubernetes.io/name: deployment
+          app.kubernetes.io/part-of: ansible-test
+          control-plane: controller-manager
+        name: ansible-test-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: controller-manager
+          strategy: {}
+          template:
+            metadata:
+              annotations:
+                kubectl.kubernetes.io/default-container: manager
+              labels:
+                control-plane: controller-manager
+            spec:
+              affinity:
+                nodeAffinity:
+                  requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                    - matchExpressions:
+                      - key: node-role.kubernetes.io/control-plane
+                        operator: Exists
+              containers:
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=0
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                  protocol: TCP
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 128Mi
+                  requests:
+                    cpu: 5m
+                    memory: 64Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
+              - args:
+                - --health-probe-bind-address=:6789
+                - --metrics-bind-address=127.0.0.1:8080
+                - --leader-elect
+                - --leader-election-id=ansible-test
+                env:
+                - name: ANSIBLE_GATHERING
+                  value: explicit
+                - name: ANSIBLE_NOCOLOR
+                  value: "True"
+                image: quay.io/jskrzypek/upgrade-operator:0.0.6
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 6789
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 6789
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 768Mi
+                  requests:
+                    cpu: 10m
+                    memory: 256Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: ansible-test-controller-manager
+              terminationGracePeriodSeconds: 10
+              tolerations:
+              - effect: NoSchedule
+                key: node-role.kubernetes.io/master
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: ansible-test-controller-manager
+    strategy: deployment
   installModes:
   - supported: true
     type: OwnNamespace
@@ -329,4 +581,4 @@ spec:
   provider:
     name: Jason Skrzypek
     url: https://github.com/shpwrck/openshift-upgrade-rollout-operator
-  version: 0.0.0
+  version: 0.0.6

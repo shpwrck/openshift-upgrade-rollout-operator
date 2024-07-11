@@ -1,9 +1,0 @@
-apiVersion: upgrade.example.com/v1alpha1
-kind: Plan
-metadata:
-  name: example
-spec:
-  aap:
-    controller_host: "{{ controller_host }}"
-    controller_oauthtoken: "{{ oauth_token }}"
-    job_template: "{{ job_template }}"
